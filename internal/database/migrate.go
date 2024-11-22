@@ -1,9 +1,9 @@
 package database
 
 import (
+	"database/sql"
 	"embed"
 	"errors"
-	"fmt"
 	"io/fs"
 	"sort"
 )
@@ -11,7 +11,14 @@ import (
 //go:embed migrations/*.sql
 var migrationFiles embed.FS
 
-func Migrate(version int) error {
+const MIGRATIONS_TABLE = `
+CREATE TABLE IF NOT EXISTS migrations (
+  version SERIAL PRIMARY KEY,
+  created_at TIMESTAMP NOT NULL DEFAULT now()
+)
+`
+
+func Migrate(conn *sql.DB) error {
 	entries, err := migrationFiles.ReadDir("migrations")
 	if err != nil {
 		return err
@@ -33,13 +40,29 @@ func Migrate(version int) error {
 		ups = append(ups, entries[i+1])
 	}
 
-	for _, up := range ups {
-		b, err := migrationFiles.ReadFile("migrations/" + up.Name())
+	dbVersion := getDatabaseVersion(conn)
+	for i := dbVersion; i < len(ups); i += 1 {
+		migration, err := migrationFiles.ReadFile("migrations/" + ups[i].Name())
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(b))
+
+		if _, err = conn.Exec(string(migration)); err != nil {
+			return err
+		}
 	}
 
 	return nil
+}
+
+func getDatabaseVersion(conn *sql.DB) int {
+	row := conn.QueryRow("SELECT MAX(version) AS version FROM migrations")
+
+	var version int
+	err := row.Scan(&version)
+	if err != nil {
+		return 0
+	}
+
+	return version
 }

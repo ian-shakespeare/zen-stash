@@ -2,8 +2,14 @@ CMD_DIR := cmd/
 SQL_DIR := sql/
 BIN_DIR := bin/
 
-migrate:
-	go build -o $(BIN_DIR)run-migrations  $(CMD_DIR)$(SQL_DIR)main.go
+up:
+	docker compose up
+
+down:
+	docker compose down --remove-orphans
+
+build:
+	go build -o $(BIN_DIR)zen-stash $(CMD_DIR)main.go
 
 clean:
-	rm -rf bin/
+	rm -rf bin/ .docker-storage/
