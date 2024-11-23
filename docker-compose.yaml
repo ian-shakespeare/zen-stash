@@ -1,16 +1,4 @@
 services:
-  web:
-    build: .
-    ports:
-      - 8080:80
-    environment:
-      DB_USER: user
-      DB_PASSWORD: password
-      DB_HOST: db
-      DB_NAME: zenstash
-    depends_on:
-      db:
-        condition: service_healthy
   db:
     image: postgres
     environment:
@@ -24,3 +12,15 @@ services:
       interval: 1s
       timeout: 5s
       retries: 10
+  web:
+    build: .
+    ports:
+      - 8080:80
+    environment:
+      DB_USER: user
+      DB_PASSWORD: password
+      DB_HOST: db
+      DB_NAME: zenstash
+    depends_on:
+      db:
+        condition: service_healthy

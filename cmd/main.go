@@ -13,6 +13,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	defer conn.Close()
 
 	err = database.Migrate(conn)
 	if err != nil {

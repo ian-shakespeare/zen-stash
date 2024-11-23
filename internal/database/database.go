@@ -20,7 +20,7 @@ func Connect() (*sql.DB, error) {
 		log.Fatal("missing env DB_PASSWORD")
 	}
 
-	hostname, exists := os.LookupEnv("DB_HOST")
+	host, exists := os.LookupEnv("DB_HOST")
 	if !exists {
 		log.Fatal("missing env DB_HOST")
 	}
@@ -31,8 +31,7 @@ func Connect() (*sql.DB, error) {
 	}
 
 	// TODO: Probably should enable ssl in prod.
-	connStr := fmt.Sprintf("host=%s port=5432 user=%s dbname=%s password=%s sslmode=disable", hostname, username, name, password)
-	fmt.Println(connStr)
+	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, 5432, username, password, name)
 
 	return sql.Open("postgres", connStr)
 }

@@ -1,9 +1,8 @@
 CMD_DIR := cmd/
-SQL_DIR := sql/
 BIN_DIR := bin/
 
 up:
-	docker compose up
+	docker compose up --build web
 
 down:
 	docker compose down --remove-orphans
