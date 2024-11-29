@@ -7,6 +7,7 @@ import (
 
 	"github.com/ian-shakespeare/zen-stash/internal/database"
 	"github.com/ian-shakespeare/zen-stash/internal/handlers"
+	"github.com/ian-shakespeare/zen-stash/pkg/utils"
 )
 
 func main() {
@@ -23,6 +24,7 @@ func main() {
 
 	server := handlers.New(db)
 
-	fmt.Println("Listening on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", server))
+	port := utils.FallbackEnv("PORT", "8080")
+	fmt.Printf("Listening on port %s\n", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), server))
 }
