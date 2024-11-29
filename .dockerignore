@@ -1,0 +1,10 @@
+.github
+.vscode
+*.swp
+
+bin/
+docker-compose.yaml
+Dockerfile
+Makefile
+
+README.md

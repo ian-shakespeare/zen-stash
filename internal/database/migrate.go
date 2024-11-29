@@ -33,10 +33,10 @@ func Migrate(conn *sql.DB) error {
 	})
 
 	ups := []fs.DirEntry{}
-	downs := []fs.DirEntry{}
+	// downs := []fs.DirEntry{}
 
 	for i := 0; i < len(entries); i += 2 {
-		downs = append(downs, entries[i])
+		// downs = append(downs, entries[i])
 		ups = append(ups, entries[i+1])
 	}
 

@@ -6,23 +6,23 @@ import (
 	"net/http"
 
 	"github.com/ian-shakespeare/zen-stash/internal/database"
+	"github.com/ian-shakespeare/zen-stash/internal/handlers"
 )
 
 func main() {
-	conn, err := database.Connect()
+	db, err := database.Connect()
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	defer conn.Close()
+	defer db.Close()
 
-	err = database.Migrate(conn)
+	err = database.Migrate(db)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	http.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "OK")
-	})
+	server := handlers.New(db)
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	fmt.Println("Listening on port 8080")
+	log.Fatal(http.ListenAndServe(":8080", server))
 }

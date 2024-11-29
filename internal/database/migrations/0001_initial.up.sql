@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS users (
   user_id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 );
 
-CREATE TABLE IF NOT EXISTS files (
-  file_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+CREATE TABLE IF NOT EXISTS artifacts (
+  artifact_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR NOT NULL,
   mime VARCHAR NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT now(),
