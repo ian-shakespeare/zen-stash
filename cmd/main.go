@@ -22,6 +22,11 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	err = database.LoadProcedures(db)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
 	server := handlers.New(db)
 
 	port := utils.FallbackEnv("PORT", "8080")

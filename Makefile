@@ -16,7 +16,12 @@ build:
 lint:
 	golangci-lint run ./...
 
+test-unit:
+	go test ./...
+
+test: test-unit
+
 clean:
 	rm -rf bin/ .docker-storage/
 
-.PHONY: all up down clean lint
+.PHONY: all up down lint test-unit test clean

@@ -1,7 +1,6 @@
 package database
 
 import (
-	"database/sql"
 	"embed"
 	"errors"
 	"io/fs"
@@ -12,13 +11,13 @@ import (
 var migrationFiles embed.FS
 
 const MIGRATIONS_TABLE = `
-CREATE TABLE IF NOT EXISTS migrations (
+CREATE TABLE IF NOT EXISTS sql_migrations (
   version SERIAL PRIMARY KEY,
   created_at TIMESTAMP NOT NULL DEFAULT now()
 )
 `
 
-func Migrate(conn *sql.DB) error {
+func Migrate(c Connection) error {
 	entries, err := migrationFiles.ReadDir("migrations")
 	if err != nil {
 		return err
@@ -40,14 +39,14 @@ func Migrate(conn *sql.DB) error {
 		ups = append(ups, entries[i+1])
 	}
 
-	dbVersion := getDatabaseVersion(conn)
+	dbVersion := getDatabaseVersion(c)
 	for i := dbVersion; i < len(ups); i += 1 {
 		migration, err := migrationFiles.ReadFile("migrations/" + ups[i].Name())
 		if err != nil {
 			return err
 		}
 
-		if _, err = conn.Exec(string(migration)); err != nil {
+		if _, err = c.Exec(string(migration)); err != nil {
 			return err
 		}
 	}
@@ -55,8 +54,8 @@ func Migrate(conn *sql.DB) error {
 	return nil
 }
 
-func getDatabaseVersion(conn *sql.DB) int {
-	row := conn.QueryRow("SELECT MAX(version) AS version FROM migrations")
+func getDatabaseVersion(c Connection) int {
+	row := c.QueryRow("SELECT MAX(version) AS version FROM sql_migrations")
 
 	var version int
 	err := row.Scan(&version)

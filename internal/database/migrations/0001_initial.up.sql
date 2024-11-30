@@ -1,21 +1,18 @@
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS schema_migrations (
-  schema_migration_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  schema_version INTEGER NOT NULL DEFAULT 1,
-  updated_at TIMESTAMP NOT NULL DEFAULT now()
-);
-
-INSERT INTO schema_migrations VALUES (DEFAULT, DEFAULT, DEFAULT);
-
 CREATE TABLE IF NOT EXISTS users (
-  user_id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+  user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  first_name VARCHAR(255) NOT NULL,
+  last_name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_digest VARCHAR NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS artifacts (
   artifact_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR NOT NULL,
-  mime VARCHAR NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  mime VARCHAR(255) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT now(),
   user_id UUID NOT NULL REFERENCES users(user_id)
 );

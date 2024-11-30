@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"database/sql"
 	"net/http"
+
+	"github.com/ian-shakespeare/zen-stash/internal/database"
 )
 
-func New(db *sql.DB) http.Handler {
+func New(db database.Connection) http.Handler {
 	router := http.NewServeMux()
 
 	router.HandleFunc("GET /healthcheck", func(w http.ResponseWriter, r *http.Request) {

@@ -9,6 +9,12 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type Connection interface {
+	Exec(query string, args ...any) (sql.Result, error)
+	Query(query string, args ...any) (*sql.Rows, error)
+	QueryRow(query string, args ...any) *sql.Row
+}
+
 func Connect() (*sql.DB, error) {
 	username, exists := os.LookupEnv("DB_USER")
 	if !exists {
