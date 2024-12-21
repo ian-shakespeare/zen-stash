@@ -11,11 +11,11 @@ import (
 )
 
 type AuthManager struct {
-	signingKey string
+	signingKey []byte
 }
 
 func New(signingKey string) *AuthManager {
-	return &AuthManager{signingKey}
+	return &AuthManager{[]byte(signingKey)}
 }
 
 func (a *AuthManager) GenerateToken(user *models.User, expiration time.Time) ([]byte, error) {

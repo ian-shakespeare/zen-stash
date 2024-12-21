@@ -15,7 +15,7 @@ func New(db database.Connection, a *auth.AuthManager) http.Handler {
 		_, _ = w.Write([]byte("OK"))
 	})
 
-	router.Handle("/users", UserHandlers(db, a))
+	router.Handle("/", AuthHandlers(db, a))
 
 	return router
 }
