@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/ian-shakespeare/zen-stash/internal/auth"
 	"github.com/ian-shakespeare/zen-stash/internal/database"
 	"github.com/ian-shakespeare/zen-stash/internal/handlers"
 	"github.com/ian-shakespeare/zen-stash/pkg/utils"
@@ -27,7 +29,14 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	server := handlers.New(db)
+	signingKey, exists := os.LookupEnv("SIGNING_KEY")
+	if !exists {
+		log.Fatal("missing env `SIGNING_KEY`")
+	}
+
+	a := auth.New(signingKey)
+
+	server := handlers.New(db, a)
 
 	port := utils.FallbackEnv("PORT", "8080")
 	fmt.Printf("Listening on port %s\n", port)

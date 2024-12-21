@@ -6,17 +6,19 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ian-shakespeare/zen-stash/internal/auth"
 	"github.com/ian-shakespeare/zen-stash/internal/database"
 	"github.com/ian-shakespeare/zen-stash/internal/handlers"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUserHandlers(t *testing.T) {
+func TestCreateUser(t *testing.T) {
 	t.Parallel()
 
-	h := handlers.UserHandlers(database.NoOpConnection{})
+	a := auth.New("TEST")
+	h := handlers.UserHandlers(database.NoOpConnection{}, a)
 
-	t.Run("post/invalidForm", func(t *testing.T) {
+	t.Run("invalidForm", func(t *testing.T) {
 		t.Parallel()
 
 		w := NewResponseWriter()
@@ -29,7 +31,7 @@ func TestUserHandlers(t *testing.T) {
 		assert.Contains(t, string(w.Body), "Invalid form")
 	})
 
-	t.Run("post/invalidFirstName", func(t *testing.T) {
+	t.Run("invalidFirstName", func(t *testing.T) {
 		t.Parallel()
 
 		w := NewResponseWriter()
@@ -73,7 +75,7 @@ func TestUserHandlers(t *testing.T) {
 		}
 	})
 
-	t.Run("post/invalidLastName", func(t *testing.T) {
+	t.Run("invalidLastName", func(t *testing.T) {
 		t.Parallel()
 
 		w := NewResponseWriter()
@@ -119,7 +121,7 @@ func TestUserHandlers(t *testing.T) {
 		}
 	})
 
-	t.Run("post/invalidEmail", func(t *testing.T) {
+	t.Run("invalidEmail", func(t *testing.T) {
 		t.Parallel()
 
 		w := NewResponseWriter()
@@ -149,7 +151,7 @@ func TestUserHandlers(t *testing.T) {
 		}
 	})
 
-	t.Run("post/invalidPassword", func(t *testing.T) {
+	t.Run("invalidPassword", func(t *testing.T) {
 		t.Parallel()
 
 		w := NewResponseWriter()
@@ -198,5 +200,49 @@ func TestUserHandlers(t *testing.T) {
 			assert.Contains(t, string(w.Body), "Password must be no more than 72 characters in length")
 			w.Reset()
 		}
+	})
+
+	t.Run("ok", func(t *testing.T) {
+		t.Parallel()
+
+		w := NewResponseWriter()
+
+		form := url.Values{}
+		form.Add("firstName", "john")
+		form.Add("lastName", "doe")
+		form.Add("email", "jdoe@email.com")
+		form.Add("password", "password")
+
+		r, err := http.NewRequest("POST", "/", strings.NewReader(form.Encode()))
+		assert.NoError(t, err)
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		h.ServeHTTP(w, r)
+		assert.Equal(t, http.StatusCreated, w.StatusCode)
+	})
+}
+
+func TestSignIn(t *testing.T) {
+	t.Skip("need to mock db")
+	t.Parallel()
+
+	a := auth.New("TEST")
+	h := handlers.UserHandlers(database.NoOpConnection{}, a)
+
+	t.Run("ok", func(t *testing.T) {
+		t.Parallel()
+
+		w := NewResponseWriter()
+
+		form := url.Values{}
+		form.Add("email", "jdoe@email.com")
+		form.Add("password", "password")
+
+		r, err := http.NewRequest("POST", "/signin", strings.NewReader(form.Encode()))
+		assert.NoError(t, err)
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		h.ServeHTTP(w, r)
+		assert.Equal(t, http.StatusOK, w.StatusCode)
 	})
 }

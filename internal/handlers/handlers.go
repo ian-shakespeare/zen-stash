@@ -3,10 +3,11 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/ian-shakespeare/zen-stash/internal/auth"
 	"github.com/ian-shakespeare/zen-stash/internal/database"
 )
 
-func New(db database.Connection) http.Handler {
+func New(db database.Connection, a *auth.AuthManager) http.Handler {
 	router := http.NewServeMux()
 
 	router.HandleFunc("GET /healthcheck", func(w http.ResponseWriter, r *http.Request) {
@@ -14,7 +15,7 @@ func New(db database.Connection) http.Handler {
 		_, _ = w.Write([]byte("OK"))
 	})
 
-	router.Handle("/users", UserHandlers(db))
+	router.Handle("/users", UserHandlers(db, a))
 
 	return router
 }

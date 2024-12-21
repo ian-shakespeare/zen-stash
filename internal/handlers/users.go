@@ -1,15 +1,25 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/mail"
 	"strings"
+	"time"
 
+	"github.com/ian-shakespeare/zen-stash/internal/auth"
 	"github.com/ian-shakespeare/zen-stash/internal/database"
+	"github.com/ian-shakespeare/zen-stash/pkg/models"
+	"github.com/ian-shakespeare/zen-stash/pkg/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func UserHandlers(db database.Connection) http.Handler {
+type AuthResponse struct {
+	AccessToken string    `json:"accessToken"`
+	Expiration  time.Time `json:"expiration"`
+}
+
+func UserHandlers(db database.Connection, a *auth.AuthManager) http.Handler {
 	users := http.NewServeMux()
 
 	users.HandleFunc("POST /", func(w http.ResponseWriter, r *http.Request) {
@@ -60,12 +70,86 @@ func UserHandlers(db database.Connection) http.Handler {
 
 		_, err = db.Exec("CALL create_user($1, $2, $3, $4)", firstName, lastName, email, passwordDigest)
 		if err != nil {
-			_ = NewHandlerError("could not create user", err).Send(w, http.StatusInternalServerError)
+			_ = NewHandlerError("Could not create user", err).Send(w, http.StatusInternalServerError)
+			return
+		}
+
+		row := db.QueryRow("CALL get_user($1)", email)
+		var u models.User
+		if err := row.Scan(&u); err != nil {
+			_ = NewHandlerError("User not found", err).Send(w, http.StatusNotFound)
+			return
+		}
+
+		expires := utils.TwoWeeksFromNow()
+		tok, err := a.GenerateToken(&u, expires)
+		if err != nil {
+			_ = NewHandlerError("Could not sign in", err).Send(w, http.StatusInternalServerError)
+			return
+		}
+
+		res := AuthResponse{
+			AccessToken: string(tok),
+			Expiration:  expires,
+		}
+
+		b, err := json.Marshal(res)
+		if err != nil {
+			_ = NewHandlerError("Could not send access token", err).Send(w, http.StatusInternalServerError)
 			return
 		}
 
 		w.WriteHeader(201)
-		_, _ = w.Write([]byte("created"))
+		_, _ = w.Write(b)
+	})
+
+	users.HandleFunc("POST /signin", func(w http.ResponseWriter, r *http.Request) {
+		if r.Body == nil || r.ParseForm() != nil {
+			_ = NewHandlerError("Invalid form", nil).Send(w, http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+
+		email := strings.Trim(r.FormValue("email"), " \t\r\n")
+		password := strings.Trim(r.FormValue("password"), " \t\r\n")
+
+		row := db.QueryRow("CALL get_user($1)", email)
+		if row == nil {
+			_ = NewHandlerError("User not found", nil).Send(w, http.StatusNotFound)
+			return
+		}
+
+		var u models.User
+		if err := row.Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.PasswordDigest, &u.CreatedAt); err != nil {
+			_ = NewHandlerError("User not found", err).Send(w, http.StatusNotFound)
+			return
+		}
+
+		if err := bcrypt.CompareHashAndPassword([]byte(u.PasswordDigest), []byte(password)); err != nil {
+			_ = NewHandlerError("Invalid credentials", err).Send(w, http.StatusNotFound)
+			return
+		}
+
+		expires := utils.TwoWeeksFromNow()
+		tok, err := a.GenerateToken(&u, expires)
+		if err != nil {
+			_ = NewHandlerError("Could not sign in", err).Send(w, http.StatusInternalServerError)
+			return
+		}
+
+		res := AuthResponse{
+			AccessToken: string(tok),
+			Expiration:  expires,
+		}
+
+		b, err := json.Marshal(res)
+		if err != nil {
+			_ = NewHandlerError("Could not send access token", err).Send(w, http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(200)
+		_, _ = w.Write(b)
 	})
 
 	return users
